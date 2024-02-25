@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
-# Data collection
+# 1. Data collection
 data_train = pd.read_excel(r"./data/train/Data_Train.xlsx")
 print(data_train.head())
 print(data_train.tail(5))
 
-# Data cleaning/Data Preparation
+# 2. Data cleaning/Data Preparation
 print(data_train.info())
 print(data_train.isnull().sum())
 
@@ -59,7 +60,7 @@ cols_to_drop = ["Arrival_Time", "Dep_Time"]
 data_copy.drop(cols_to_drop, axis=1, inplace=True)
 print(data_copy.head(3))
 
-# Data Analysis
+# 3. Data Analysis
 
 # TODO: Analyze when will most of the flights take off?
 
@@ -89,3 +90,105 @@ print(
     .plot(kind="bar", color="green")
 )
 plt.show()
+
+
+# Preprocess duration
+def preprocess_duration(x):
+    if "h" not in x:
+        x = "0h" + " " + x
+    elif "m" not in x:
+        x = x + " " + "0m"
+
+    return x
+
+
+data_copy["Duration"] = data_copy["Duration"].apply(preprocess_duration)
+
+data_copy["Duration_hours"] = data_copy["Duration"].apply(
+    lambda x: int(x.split(" ")[0][0:-1])
+)
+data_copy["Duration_mins"] = data_copy["Duration"].apply(
+    lambda x: int(x.split(" ")[1][0:-1])
+)
+
+
+data_copy["Duration_total_mins"] = (
+    data_copy["Duration"]
+    .str.replace("h", "*60")
+    .str.replace(" ", "+")
+    .str.replace("m", "*1")
+    .apply(eval)
+)
+data_copy["Price"] = data_copy["Price"] * 0.012
+
+sns.lmplot(x="Duration_total_mins", y="Price", data=data_copy)
+plt.show()
+
+sns.scatterplot(x="Duration_total_mins", y="Price", data=data_copy)
+plt.show()
+
+sns.scatterplot(x="Duration_total_mins", y="Price", hue="Total_Stops", data=data_copy)
+plt.show()
+
+data_copy["Airline"] == "Jet Airways"
+
+# Which routes of Jet Airways are most popular?
+print(
+    data_copy[data_copy["Airline"] == "Jet Airways"]
+    .groupby("Route")
+    .size()
+    .sort_values(ascending=False)
+)
+
+# Airlines and Price Analysis
+sns.boxplot(
+    x="Airline", y="Price", data=data_copy.sort_values("Price", ascending=False)
+)
+plt.xticks(rotation="vertical")
+plt.show()
+
+# 4. Feature engineering
+# Feature encoding technique: one-hot encoding
+# string to number, vector
+
+cat_col = [col for col in data_copy.columns if data_copy[col].dtype == "object"]
+
+num_col = [col for col in data_copy.columns if data_copy[col].dtype != "object"]
+
+print(data_copy["Source"].unique())
+
+data_copy["Source"].apply(lambda x: 1 if x == "Banglore" else 0)
+
+for sub_category in data_copy["Source"].unique():
+    data_copy["Source_" + sub_category] = data_copy["Source"].apply(
+        lambda x: 1 if x == sub_category else 0
+    )
+
+print(data_copy)
+
+# Optimized feature enconding
+print(data_copy["Airline"].unique())
+
+data_copy.groupby(["Airline"])["Price"].mean().sort_values()
+airlines = data_copy.groupby(["Airline"])["Price"].mean().sort_values().index
+
+# Create dict
+dict_airlines = {key: index for index, key in enumerate(airlines, 0)}
+
+data_copy["Airline"] = data_copy["Airline"].map(dict_airlines)
+
+print(data_copy["Airline"])
+
+print(data_copy["Destination"].unique())
+
+data_copy["Destination"].replace("New Delhi", "Delhi", inplace=True)
+
+
+dest = data_copy.groupby(["Destination"])["Price"].mean().sort_values().index
+
+# Create dict
+dict_dest = {key: index for index, key in enumerate(dest, 0)}
+
+data_copy["Destination"] = data_copy["Destination"].map(dict_dest)
+
+print(data_copy["Destination"])
