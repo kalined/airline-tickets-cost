@@ -1,7 +1,13 @@
+import pickle
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn import metrics
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.feature_selection import mutual_info_regression
+from sklearn.model_selection import train_test_split
 
 # 1. Data collection
 data_train = pd.read_excel(r"./data/train/Data_Train.xlsx")
@@ -257,3 +263,68 @@ data_copy["Price"] = np.where(
     data_copy["Price"] >= 420, data_copy["Price"].median(), data_copy["Price"]
 )
 plot(data_copy, "Price")
+
+# Feature selection. Independent and Dependent (Price).
+# Mutual information approach to find out wheather two features releated or not.
+# If MI = 0, means 2 features are compleately independant.
+
+
+# Exclude Price from the DataFrame to create independant features.
+
+X = data_copy.drop(["Price"], axis=1)
+
+# Target feature/value, which is Price
+
+y = data_copy["Price"]
+
+# return mutual information scores for all features
+imp = mutual_info_regression(X, y)
+print(imp)
+
+# Add important values to the DataFrame
+
+imp_df = pd.DataFrame(imp, index=X.columns)
+
+# Here we can see that 'Airline', 'Destination', 'Dep_Time_Hour', 'Arrival_Time_Hour',
+#  and 'Duration_hours' have relatively high mutual information scores,
+#  indicating that they are important features in predicting the price.
+
+imp_df.columns = ["importance"]
+print(imp_df)
+
+print(imp_df.sort_values(by="importance", ascending=False))
+
+# 5. ML model building
+# Regression is going to be used
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42
+)
+
+# since it is a regression use case
+
+ml_model = RandomForestRegressor()
+
+ml_model.fit(X_train, y_train)
+
+y_pred = ml_model.predict(X_test)
+
+# Predicted prices
+print("Predictions:", y_pred)
+
+# Accuracy how well model is performing (80%)
+print("Accuracy:", metrics.r2_score(y_test, y_pred))
+
+# Model dumping (saving)
+
+file = open(r"./models/rf_random.pkl", "wb")
+pickle.dump(ml_model, file)
+
+# Check how it works
+model = open(r"./models/rf_random.pkl", "rb")
+forest = pickle.load(model)
+
+y_pred2 = forest.predict(X_test)
+
+print("Predictions using .pkl:", y_pred2)
+print("Check if the accuracy is the same:", metrics.r2_score(y_test, y_pred2))
