@@ -8,6 +8,7 @@ from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_selection import mutual_info_regression
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
 
 # 1. Data collection
 data_train = pd.read_excel(r"./data/train/Data_Train.xlsx")
@@ -328,3 +329,57 @@ y_pred2 = forest.predict(X_test)
 
 print("Predictions using .pkl:", y_pred2)
 print("Check if the accuracy is the same:", metrics.r2_score(y_test, y_pred2))
+
+
+# Define Evaluation metric
+# Mean Absolute Persentage Error
+
+
+def mape(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+
+    # Error is actual data - predicted
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
+print("Mean Absolute Percentage Error:", mape(y_test, y_pred))
+
+# Automate ML Pipeline
+
+
+def predict(ml_model):
+    model = ml_model.fit(X_train, y_train)
+    print("Training score: {}".format(model.score(X_train, y_train)))
+    y_prediction = model.predict(X_test)
+    print("Predictions are: {}".format(y_prediction))
+    print("\n")
+    r2_score = metrics.r2_score(y_test, y_prediction)
+    print("r2 score: {}".format(r2_score))
+    print(
+        "Mean Absolute Deviation(MAE): {}".format(
+            metrics.mean_absolute_error(y_test, y_prediction)
+        )
+    )
+    print(
+        "Mean Squared Error(MSE): {}".format(
+            metrics.mean_squared_error(y_test, y_prediction)
+        )
+    )
+    print(
+        "Root Mean Squared Error(RMSE): {}".format(
+            metrics.root_mean_squared_error(y_test, y_prediction)
+        )
+    )
+    print("Mean Absolute Percentage Error(MAPE): {}".format(mape(y_test, y_prediction)))
+    sns.distplot(y_test - y_prediction)
+    plt.show()
+
+
+predict(RandomForestRegressor())
+# For most of the data point we will
+# encounter very small error
+
+# Check for Decision Tree
+predict(DecisionTreeRegressor())
+
+# We can pass more ML algorithms
