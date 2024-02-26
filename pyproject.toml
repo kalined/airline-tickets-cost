@@ -2,7 +2,7 @@
 name = "airlines-fare-tickets"
 version = "0.1.0"
 description = ""
-authors = ["EdgeSan <edgar.kalinovski@gmail.com>"]
+authors = ["kalined <edgar.kalinovski@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
