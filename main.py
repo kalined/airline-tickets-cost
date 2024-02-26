@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -192,3 +193,67 @@ dict_dest = {key: index for index, key in enumerate(dest, 0)}
 data_copy["Destination"] = data_copy["Destination"].map(dict_dest)
 
 print(data_copy["Destination"])
+
+
+# Label encoding without sklearn
+
+print(data_copy["Total_Stops"].unique())
+
+stop = {"non-stop": 0, "1 stop": 1, "2 stops": 2, "3 stops": 3, "4 stops": 4}
+
+data_copy["Total_Stops"] = data_copy["Total_Stops"].map(stop)
+
+# Remove data that is not needed
+
+data_copy["Additional_Info"].value_counts()
+
+data_copy.drop(
+    columns=[
+        "Date_of_Journey",
+        "Additional_Info",
+        "Duration_total_mins",
+        "Source",
+        "Journey_Year",
+        "Route",
+        "Duration",
+    ],
+    axis=1,
+    inplace=True,
+)
+print(data_copy.columns)
+
+
+# Outlier detection
+
+
+def plot(df, col):
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+
+    sns.distplot(df[col], ax=ax1)
+    sns.boxplot(df[col], ax=ax2, orient="h")
+    sns.distplot(df[col], ax=ax3, kde=False)
+    plt.show()
+
+
+print(plot(data_copy, "Price"))
+
+# Replace outliers with the median
+
+q3 = data_copy["Price"].quantile(0.75)
+q1 = data_copy["Price"].quantile(0.25)
+
+iqr = q3 - q1
+maximum = q3 + 1.5 * iqr
+minimum = q1 - 1.5 * iqr
+
+print(maximum)
+print(minimum)
+
+print(
+    len([price for price in data_copy["Price"] if price > maximum or price < minimum])
+)
+
+data_copy["Price"] = np.where(
+    data_copy["Price"] >= 420, data_copy["Price"].median(), data_copy["Price"]
+)
+plot(data_copy, "Price")
