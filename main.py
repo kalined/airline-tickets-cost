@@ -7,7 +7,7 @@ import seaborn as sns
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_selection import mutual_info_regression
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.tree import DecisionTreeRegressor
 
 # 1. Data collection
@@ -383,3 +383,48 @@ predict(RandomForestRegressor())
 predict(DecisionTreeRegressor())
 
 # We can pass more ML algorithms
+
+
+# Hypertune ML model
+# hyperparameters optimization
+
+# TODO:
+# 1. Choose ML algorithm
+# 2. Create dict of the hyperparameters (hyperparameter-space)
+
+reg_rf = RandomForestRegressor()
+# values are taken from the RandomForestRegressor()
+# Return evenly spaced numbers over a specified interval
+np.linspace(start=100, stop=1200, num=6)
+
+n_estimators = [int(x) for x in np.linspace(start=100, stop=1200, num=6)]
+
+max_features = ["auto", "sqrt"]
+
+max_depth = [int(x) for x in np.linspace(start=5, stop=30, num=4)]
+
+min_samples_split = [5, 10, 15, 100]
+
+random_grid = {
+    "n_estimators": n_estimators,
+    "max_features": max_features,
+    "max_depth": max_depth,
+    "min_samples_split": min_samples_split,
+}
+
+# Hyperparameter space
+print(random_grid)
+
+rf_random = RandomizedSearchCV(
+    estimator=reg_rf, param_distributions=random_grid, cv=3, n_jobs=-1, verbose=2
+)
+
+print(rf_random.fit(X_train, y_train))
+
+print(rf_random.best_params_)
+
+# Best optimized model
+print("This algorith will provide the best score: ", rf_random.best_estimator_)
+
+# What accuracy will be using that algo?
+print("Accuracy:", rf_random.best_score_)
